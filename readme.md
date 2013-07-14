@@ -2,7 +2,19 @@
 
 ## Usage
 
-…
+### BitArray
+```java
+// Determine which of the buildings in the town are shops. The other ones are houses.
+final int buildingTypes = BitArray.ShortGenerator.generateRandomArray(town.size, town.shopCount);
+// Loop over the buildings, and place them.
+for (int buildingIdentifier = 0; town.size != buildingIdentifier; buildingIdentifier++) {
+	if (BitArray.getBit(buildingTypes, buildingIdentifier)) {
+		addShop(buildingIdentifier);
+	} else {
+		addHouse(buildingIdentifier);
+	}
+}
+```
 
 ## Copying
 
