@@ -30,6 +30,10 @@ package org.ilumbo.giantsnail.mathematics;
  */
 public final class POTMath {
 	/**
+	 * ln(2).
+	 */
+	private static final double LOG_2 = .69315;
+	/**
 	 * Returns the lowest power of two that is equal to or greater than the passed input. Behaviour is undefined for
 	 * non-positive inputs. 1 is considered a power of two (2 to the power of 0).
 	 */
@@ -46,5 +50,12 @@ public final class POTMath {
 	 */
 	public static final int floor(final int input) {
 		return 1 << 31 - Integer.numberOfLeadingZeros(input);
+	}
+	/**
+	 * Returns the power of two that is the closest power of two to the passed input. Behaviour is undefined for non-positive
+	 * inputs. 1 is considered a power of two (2 to the power of 0).
+	 */
+	public static final int round(final int input) {
+		return 1 << Math.round(Math.log(input) / LOG_2);
 	}
 }
