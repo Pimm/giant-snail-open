@@ -9,7 +9,16 @@ import android.view.Surface;
 
 public abstract class ScreenOrientationUnlocker {
 	/**
+	 * The landscape base orientation. The base orientation for non-reverse landscape as well as reverse landscape.
+	 */
+	public static final boolean BASE_ORIENTATION_LANDSCAPE = true;
+	/**
+	 * The portrait base orientation. The base orientation for non-reverse portrait as well as reverse portrait.
+	 */
+	public static final boolean BASE_ORIENTATION_PORTRAIT = false;
+	/**
 	 * While unlocked, the orientation will be influenced by sensor data.
+	 * {@link ScreenOrientationUnlocker#UNLOCKED_BEHAVIOR_USER} is probably a better choice.
 	 */
 	public static final boolean UNLOCKED_BEHAVIOR_SENSOR = false;
 	/**
@@ -18,24 +27,32 @@ public abstract class ScreenOrientationUnlocker {
 	public static final boolean UNLOCKED_BEHAVIOR_USER = true;
 	public abstract void lock();
 	/**
-	 * Creates and returns a new screen orientation locker for the passed activity. The passed activity must have its requested
-	 * orientation set to either {@link ActivityInfo#SCREEN_ORIENTATION_PORTRAIT} or
-	 * {@link ActivityInfo#SCREEN_ORIENTATION_LANDSCAPE}.
+	 * Sets the requested orientation of the passed activity to {@link ActivityInfo#SCREEN_ORIENTATION_PORTRAIT} or
+	 * {@link ActivityInfo#SCREEN_ORIENTATION_LANDSCAPE} depending on the passed base orientation. The screen orientation is
+	 * then locked. Creates and returns a new screen orientation locker which can be used to lock and unlock the screen
+	 * orientation.
 	 */
-	public static final ScreenOrientationUnlocker obtain(final Activity targetActivity, final boolean unlockedBehavior) {
-		final int currentRequestedOrientation = targetActivity.getRequestedOrientation();
-		// Ensure the current requested orientation is OK.
-		if (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE != currentRequestedOrientation && ActivityInfo.SCREEN_ORIENTATION_PORTRAIT != currentRequestedOrientation) {
-			throw new IllegalStateException("The requested orientation of the activity is unexpected.");
-		}
+	public static final ScreenOrientationUnlocker obtain(final Activity targetActivity, final boolean baseOrientation) {
+		return obtain(targetActivity, baseOrientation, UNLOCKED_BEHAVIOR_USER);
+	}
+	/**
+	 * Sets the requested orientation of the passed activity to {@link ActivityInfo#SCREEN_ORIENTATION_PORTRAIT} or
+	 * {@link ActivityInfo#SCREEN_ORIENTATION_LANDSCAPE} depending on the passed base orientation. The screen orientation is
+	 * then locked. Creates and returns a new screen orientation locker which can be used to lock and unlock the screen
+	 * orientation.
+	 */
+	public static final ScreenOrientationUnlocker obtain(final Activity targetActivity, final boolean baseOrientation, final boolean unlockedBehavior) {
+		// Set the initial requested orientation.
+		final int currentRequestedOrientation = BASE_ORIENTATION_LANDSCAPE == baseOrientation ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+		targetActivity.setRequestedOrientation(currentRequestedOrientation);
 		// Return the jelly bean implementation if available.
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-			return new JellyBeanScreenOrientationLocker(targetActivity, currentRequestedOrientation, unlockedBehavior);
+			return new JellyBeanScreenOrientationLocker(targetActivity, baseOrientation, unlockedBehavior);
 		// Return the gingerbread implementation if available. This implementation is a lot less sexy than the one above, and
 		// always behaves as if the unlocked behaviour was set to UNLOCKED_BEHAVIOR_SENSOR.
 		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			try {
-				return new GingerbreadScreenOrientationLocker(targetActivity, currentRequestedOrientation);
+				return new GingerbreadScreenOrientationLocker(targetActivity, baseOrientation);
 			} catch (IllegalRotationException exception) {
 				// Should the construction fail, log this and "silently" switch to the null object implementation below.
 				android.util.Log.w(ScreenOrientationUnlocker.class.getSimpleName(), exception.getMessage());
@@ -59,17 +76,17 @@ public abstract class ScreenOrientationUnlocker {
 		 * The requested orientation when unlocked. ActivityInfo.SCREEN_ORIENTATION_(SENSOR|USER)_(LANDSCAPE|PORTRAIT).
 		 */
 		private final int unlockedRequestedOrientation;
-		public JellyBeanScreenOrientationLocker(final Activity targetActivity, final int currentRequestedOrientation, final boolean unlockedBehavior) {
+		public JellyBeanScreenOrientationLocker(final Activity targetActivity, final boolean baseOrientation, final boolean unlockedBehavior) {
 			this.targetActivity = targetActivity;
-			// Determine the requested orientation when the activity is unlocked, based on the current requested orientation
-			// and the unlocked behaviour.
-			if (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE == currentRequestedOrientation) {
+			// Determine the requested orientation when the activity is unlocked, based on the base orientation and the
+			// unlocked behaviour.
+			if (BASE_ORIENTATION_LANDSCAPE == baseOrientation) {
 				if (UNLOCKED_BEHAVIOR_SENSOR == unlockedBehavior) {
 					unlockedRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
 				} else /* if (UNLOCKED_BEHAVIOR_USER == unlockedBehavior) */ {
 					unlockedRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
 				}
-			} else /* if (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT == currentRequestedOrientation) */ {
+			} else /* if (BASE_ORIENTATION_PORTRAIT == baseOrientation) */ {
 				if (UNLOCKED_BEHAVIOR_SENSOR == unlockedBehavior) {
 					unlockedRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
 				} else /* if (UNLOCKED_BEHAVIOR_USER == unlockedBehavior) */ {
@@ -90,9 +107,9 @@ public abstract class ScreenOrientationUnlocker {
 		private static final long serialVersionUID = 6259458757914445838l;
 		public IllegalRotationException(final int value) {
 			super(new StringBuilder(24)
-				.append("Unexpected rotation ")
-				.append(value)
-				.append('.').toString());
+					.append("Unexpected rotation ")
+					.append(value)
+					.append('.').toString());
 		}
 	}
 	/**
@@ -129,8 +146,9 @@ public abstract class ScreenOrientationUnlocker {
 		 * The requested orientation when unlocked. ActivityInfo.SCREEN_ORIENTATION_SENSOR_(LANDSCAPE|PORTRAIT).
 		 */
 		private final int unlockedRequestedOrientation;
-		public GingerbreadScreenOrientationLocker(final Activity targetActivity, final int currentRequestedOrientation) throws IllegalRotationException {
-			targetDisplay = (this.targetActivity = targetActivity).getWindowManager().getDefaultDisplay();
+		public GingerbreadScreenOrientationLocker(final Activity targetActivity, final boolean baseOrientation) throws IllegalRotationException {
+			targetDisplay = (this.targetActivity = targetActivity)
+					.getWindowManager().getDefaultDisplay();
 			// Determine and store the two rotations the screen can have. The two rotations are the non-reverse and the reverse
 			// one. Because the current requested orientation is portrait or landscape (and not reverse-portrait or reverse-
 			// landscape), the current rotation is the rotation of the display when the screen is in its non-reversed landscape
@@ -152,10 +170,12 @@ public abstract class ScreenOrientationUnlocker {
 				throw new IllegalRotationException(targetDisplay.getRotation());
 			}
 			// Figure out the orientations.
-			if (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE == (lockedNonReverseRequestedOrientation = currentRequestedOrientation)) {
+			if (BASE_ORIENTATION_LANDSCAPE == baseOrientation) {
+				lockedNonReverseRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 				lockedReverseRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
 				unlockedRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
-			} else /* if (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT == currentRequestedOrientation) */ {
+			} else /* if (BASE_ORIENTATION_PORTRAIT == baseOrientation) */ {
+				lockedNonReverseRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 				lockedReverseRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
 				unlockedRequestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
 			}
