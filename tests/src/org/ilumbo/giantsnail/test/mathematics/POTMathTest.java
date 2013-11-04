@@ -30,7 +30,7 @@ public final class POTMathTest extends TestCase {
 	public final void testRound() {
 		assertEquals(1, POTMath.round(1));
 		assertEquals(2, POTMath.round(2));
-		assertTrue(2 == POTMath.round(3) || 4 == POTMath.round(3));
+		assertEquals(4, POTMath.round(3));
 		assertEquals(4, POTMath.round(4));
 		assertEquals(4, POTMath.round(5));
 		assertEquals(128, POTMath.round(100));

@@ -35,7 +35,7 @@ public final class POTMath {
 	private static final double LOG_2 = .69315;
 	/**
 	 * Returns the lowest power of two that is equal to or greater than the passed input. Behaviour is undefined for
-	 * non-positive inputs. 1 is considered a power of two (2 to the power of 0).
+	 * non-positive inputs. 1 is considered a power of two (2⁰).
 	 */
 	public static final int ceil(final int input) {
 		// If input & (input - 1) is zero, the input is a power of two itself (or zero) and therefore the expected output.
@@ -46,14 +46,14 @@ public final class POTMath {
 	}
 	/**
 	 * Returns the highest (greatest) power of two that is equal to or smaller than the passed input. Behaviour is undefined
-	 * for non-positive inputs. 1 is considered a power of two (2 to the power of 0).
+	 * for non-positive inputs. 1 is considered a power of two (2⁰).
 	 */
 	public static final int floor(final int input) {
 		return 1 << 31 - Integer.numberOfLeadingZeros(input);
 	}
 	/**
-	 * Returns the power of two that is the closest power of two to the passed input. Behaviour is undefined for non-positive
-	 * inputs. 1 is considered a power of two (2 to the power of 0).
+	 * Returns 2ⁿ, where n is closer to ²log(input) than n - 1 and n + 1 are. Behaviour is undefined for non-positive inputs. 1
+	 * is considered a power of two (2⁰).
 	 */
 	public static final int round(final int input) {
 		return 1 << Math.round(Math.log(input) / LOG_2);
