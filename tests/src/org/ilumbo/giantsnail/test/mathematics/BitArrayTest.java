@@ -215,4 +215,42 @@ public final class BitArrayTest extends TestCase {
 			}
 		}
 	}
+	public final void testReverse() throws Exception {
+		// Create a bit array that is 01100101.
+		int bitArray = BitArray.ShortGenerator.generateFalseArray();
+		bitArray = BitArray.setBit(bitArray, 1, true);
+		bitArray = BitArray.setBit(bitArray, 2, true);
+		bitArray = BitArray.setBit(bitArray, 5, true);
+		bitArray = BitArray.setBit(bitArray, 7, true);
+		// Flip the bit array as if the length were 6.
+		int reversedBitArray = BitArray.reverse(bitArray, 6);
+		// Expect the flipped bit array to be 100110.
+		assertEquals(true, BitArray.getBit(reversedBitArray, 0));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 1));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 2));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 3));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 4));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 5));
+		// Flip the bit array as if the length were 7.
+		reversedBitArray = BitArray.reverse(bitArray, 7);
+		// Expect the flipped bit array to be 0100100.
+		assertEquals(false, BitArray.getBit(reversedBitArray, 0));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 1));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 2));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 3));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 4));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 5));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 6));
+		// Flip the bit array as if the length were 8.
+		reversedBitArray = BitArray.reverse(bitArray, 8);
+		// Expect the flipped bit array to be 10100100.
+		assertEquals(true, BitArray.getBit(reversedBitArray, 0));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 1));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 2));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 3));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 4));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 5));
+		assertEquals(true, BitArray.getBit(reversedBitArray, 6));
+		assertEquals(false, BitArray.getBit(reversedBitArray, 7));
+	}
 }

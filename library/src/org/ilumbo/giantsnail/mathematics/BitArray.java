@@ -175,6 +175,30 @@ public final class BitArray {
 		return mask == (input & mask);
 	}
 	/**
+	 * Returns whether the string of the passed number of bits starting at the passed position contains at least one true bit.
+	 */
+	public static final boolean getBitsOr(final int input, final int firstPosition, final int count) {
+		return 0 != (input & (1 << count) - 1 << firstPosition);
+	}
+	/**
+	 * Returns whether the string of the passed number of bits starting at the passed position contains at least one true bit.
+	 */
+	public static final boolean getBitsOr(final long input, final int firstPosition, final int count) {
+		return 0 != (input & (1l << count) - 1 << firstPosition);
+	}
+	/**
+	 * Returns the lowest from the set of positions of true bits. Returns NONE if there are no true bits.
+	 */
+	public static final int getFirstTrueBit(final int input) {
+		return 0 == input ? NONE : Integer.numberOfTrailingZeros(input);
+	}
+	/**
+	 * Returns the lowest from the set of positions of true bits. Returns NONE if there are no true bits.
+	 */
+	public static final int getFirstTrueBit(final long input) {
+		return 0 == input ? NONE : Long.numberOfTrailingZeros(input);
+	}
+	/**
 	 * Returns the position of a random true bit. Returns NONE if there are no true bits.
 	 */
 	public static final int getRandomTrueBit(final int input) {
@@ -254,9 +278,9 @@ public final class BitArray {
 	public static final int getRandomTrueBitsAnd(final int input, final int count, final Random random) {
 		// Find the candidates, positions which point to a true bit followed by the passed number of other true bits.
 		int canditates = 0;
-		// (32 - count) - Integer.numberOfLeadingZeros(input) skips the (count - 1) true bits with the highest positions.
-		// That's fine: those bits aren't followed by the required other true bits, and therefore don't quality.
-		int position = 32 - count - Integer.numberOfLeadingZeros(input);
+		// (Integer.SIZE - count) - Integer.numberOfLeadingZeros(input) skips the (count - 1) true bits with the highest
+		// positions. That's fine: those bits aren't followed by the required other true bits, and therefore don't quality.
+		int position = Integer.SIZE - count - Integer.numberOfLeadingZeros(input);
 		// Check whether there are no true bits at all.
 		if (-count == position) {
 			return NONE;
@@ -286,9 +310,9 @@ public final class BitArray {
 	public static final int getRandomTrueBitsAnd(final long input, final int count, final Random random) {
 		// Find the candidates, positions which point to a true bit followed by the passed number of other true bits.
 		long canditates = 0;
-		// (64 - count) - Long.numberOfLeadingZeros(input) skips the (count - 1) true bits with the highest positions. That's
-		// fine: those bits aren't followed by the required other true bits, and therefore don't quality.
-		int position = 64 - count - Long.numberOfLeadingZeros(input);
+		// (Long.SIZE - count) - Long.numberOfLeadingZeros(input) skips the (count - 1) true bits with the highest positions.
+		// That's fine: those bits aren't followed by the required other true bits, and therefore don't quality.
+		int position = Long.SIZE - count - Long.numberOfLeadingZeros(input);
 		// Check whether there are no true bits at all.
 		if (-count == position) {
 			return NONE;
@@ -301,6 +325,18 @@ public final class BitArray {
 		} while (0 != position--);
 		// Use the getRandomTrueBit implementation to select a random candidate.
 		return getRandomTrueBit(canditates, random);
+	}
+	/**
+	 * Returns a bit array with the same bits but in the reversed order.
+	 */
+	public static final int reverse(final int input, final int length) {
+		return Integer.reverse(input) >> (Integer.SIZE - length);
+	}
+	/**
+	 * Returns a bit array with the same bits but in the reversed order.
+	 */
+	public static final long reverse(final long input, final int length) {
+		return Long.reverse(input) >> (Long.SIZE - length);
 	}
 	/**
 	 * Sets the value of the bit at the passed position.
@@ -321,7 +357,7 @@ public final class BitArray {
 		// resulting string form first.  This is consistent with the string forms of regular Java arrays, as well as arrays in
 		// every language I know of.
 		final StringBuilder resultBuilder = new StringBuilder(partialResult)
-			.reverse();
+				.reverse();
 		// Add a zero for every bit that was not included in the binary representation created above.
 		while (resultSize < size) {
 			resultBuilder.append(ZERO);
@@ -336,7 +372,7 @@ public final class BitArray {
 		// resulting string form first.  This is consistent with the string forms of regular Java arrays, as well as arrays in
 		// every language I know of.
 		final StringBuilder resultBuilder = new StringBuilder(partialResult)
-			.reverse();
+				.reverse();
 		// Add a zero for every bit that was not included in the binary representation created above.
 		while (resultSize < size) {
 			resultBuilder.append(ZERO);
