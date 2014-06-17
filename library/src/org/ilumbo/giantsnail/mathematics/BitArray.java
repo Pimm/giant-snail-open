@@ -342,13 +342,13 @@ public final class BitArray {
 	 * Sets the value of the bit at the passed position.
 	 */
 	public static final int setBit(final int input, final int position, final boolean value) {
-		return value ? input | 1 << position: input & ~(1 << position);
+		return value ? input | 1 << position : input & ~(1 << position);
 	}
 	/**
 	 * Sets the value of the bit at the passed position.
 	 */
 	public static final long setBit(final long input, final int position, final boolean value) {
-		return value ? input | 1l << position: input & ~(1l << position);
+		return value ? input | 1l << position : input & ~(1l << position);
 	}
 	public final static String toString(final int input, final int size) {
 		final String partialResult = Integer.toBinaryString(input);
