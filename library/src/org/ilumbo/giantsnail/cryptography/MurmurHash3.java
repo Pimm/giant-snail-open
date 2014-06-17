@@ -31,7 +31,7 @@ public final class MurmurHash3 {
 			h1 = h1 * 5 + 0xE6546B64;
 		}
 		// Finalization.
-		h1 ^= length;
+		h1 ^= length << 2;
 		// Inlined fmix(h1)
 		h1 ^= h1 >>> 16;
 		h1 *= 0x85EBCA6B;
