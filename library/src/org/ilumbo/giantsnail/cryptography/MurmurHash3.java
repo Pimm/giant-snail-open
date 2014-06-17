@@ -49,8 +49,9 @@ public final class MurmurHash3 {
 		// Round down to 4 byte block.
 		final int roundedEnd = offset + (length & 0xFFFFFFFC);
 		for (int index = offset; roundedEnd != index; index += 4) {
-			// Little endian load order. TODO Find out whether the "& 0xFF" part actually does anything.
-			int k1 = (data[index] & 0xFF) | ((data[index | 1] & 0xFF) << 8) | ((data[index | 2] & 0xFF) << 16) | (data[index | 3] << 24);
+			// Little endian load order. The and operator turns the bytes into an unsigned integer (0…0xFF, inclusive).
+			int k1 = ((data[index /* | 0 */] & 0xFF) /* << 0 */) | ((data[index | 1] & 0xFF) << 8) |
+					((data[index | 2] & 0xFF) << 16) | ((data[index | 3] & 0xFF) << 24);
 			k1 *= c1;
 			// Inlined ROTL32(k1, 15)
 			k1 = (k1 << 15) | (k1 >>> 17);
