@@ -2,6 +2,8 @@ package org.ilumbo.giantsnail.cache;
 
 import java.util.Arrays;
 
+import org.ilumbo.giantsnail.mathematics.POTMath;
+
 import android.annotation.TargetApi;
 import android.os.Build;
 
@@ -39,13 +41,14 @@ public class CacheSupervisor {
 	 */
 	protected boolean[] statusses;
 	public CacheSupervisor(int[] initialCachedElementsIdentifiers) {
-		elementCount = 0;
+		elementCount = initialCachedElementsIdentifiers.length;
+		// Determine the initial capacity.
+		final int initialCapacity = POTMath.ceil(elementCount + 5);
 		// Copy and sort the identifiers of the elements.
-		identifiers = new int[initialCachedElementsIdentifiers.length << 1];
 		System.arraycopy(initialCachedElementsIdentifiers, 0,
-				identifiers, 0,
-				initialCachedElementsIdentifiers.length);
-		Arrays.sort(identifiers, 0, initialCachedElementsIdentifiers.length);
+				identifiers = new int[initialCapacity], 0,
+				elementCount);
+		Arrays.sort(identifiers, 0, elementCount);
 		// Add a true-status for every element.
 		Arrays.fill(statusses = new boolean[identifiers.length], true);
 	}
@@ -71,7 +74,8 @@ public class CacheSupervisor {
 		}
 	}
 	/**
-	 * Determines and returns how an element with the passed identifier should be obtained.
+	 * Determines and returns how an element with the passed identifier must be obtained. Once you call this method, you must
+	 * in fact perform the obtain operation returned.
 	 */
 	public int determineObtainOperation(int identifier) {
 		int index = getIndexForIdentifier(identifier);
@@ -80,11 +84,11 @@ public class CacheSupervisor {
 			// Set the status, so calling this method again with the same identifier will return OBTAIN_OPERATION_WAIT. Start
 			// by increasing the lengths of the arrays if needed to hold the new status (and identifier).
 			if (elementCount == identifiers.length) {
-				final int newLength = identifiers.length << 1;
+				final int newLength = elementCount << 1;
 				final int[] newIdentifiers = new int[newLength];
 				final boolean[] newStatusses = new boolean[newLength];
-				System.arraycopy(identifiers, 0, newIdentifiers, 0, identifiers.length);
-				System.arraycopy(statusses, 0, newStatusses, 0, identifiers.length);
+				System.arraycopy(identifiers, 0, newIdentifiers, 0, elementCount);
+				System.arraycopy(statusses, 0, newStatusses, 0, elementCount);
 				identifiers = newIdentifiers;
 				statusses = newStatusses;
 			}
@@ -129,6 +133,24 @@ public class CacheSupervisor {
 			return Arrays.binarySearch(identifiers, 0, elementCount, identifier);			
 		} else /* if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) */ {
 			return binarySearch(identifiers, elementCount, identifier);
+		}
+	}
+	/**
+	 * Determines and returns how an element with the passed identifier should be obtained if it was to be obtained. If this
+	 * method returns {@link #OBTAIN_OPERATION_READ}, {@link #determineObtainOperation(int)} will also return
+	 * {@link #OBTAIN_OPERATION_READ} for that identifier.
+	 */
+	public int peekObtainOperation(int identifier) {
+		int index = getIndexForIdentifier(identifier);
+		// No information could be available at all, in which case the element should be created and written.
+		if (index < 0) {
+			return OBTAIN_OPERATION_CREATE_AND_WRITE;
+		// The element could be available in cache, in which case it can simply be read.
+		} else if (statusses[index]) {
+			return OBTAIN_OPERATION_READ;
+		// The element could be in the process of being added, in which case it should be waited for.
+		} else /* if (false == statusses[index]) */ {
+			return OBTAIN_OPERATION_WAIT;
 		}
 	}
 }
