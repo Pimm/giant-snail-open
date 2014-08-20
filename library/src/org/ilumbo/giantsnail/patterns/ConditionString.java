@@ -89,7 +89,7 @@ public final class ConditionString {
 		return this.new Condition(length++);
 	}
 	/**
-	 * Returns true if every conditions in this string are met. Returns false if this string includes conditions that are not
+	 * Returns true if every conditions in this string is met. Returns false if this string includes conditions that are not
 	 * met. As a special case: returns true if this string is empty.
 	 */
 	public final boolean getIsMet() {
