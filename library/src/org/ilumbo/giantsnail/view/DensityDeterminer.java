@@ -103,13 +103,13 @@ public final class DensityDeterminer {
 		do {
 			--index;
 		} while (candidates[index] > unroundedDensity);
-		final float roundedResult;
+		final int roundedResult;
 		if (candidates[index + 1] - unroundedDensity < unroundedDensity - candidates[index]) {
 			roundedResult = candidates[index + 1];
 		} else {
 			roundedResult = candidates[index];
 		}
 		// Return the appropriate result.
-		return roundedResult / 160;
+		return roundedResult / 160f;
 	}
 }
