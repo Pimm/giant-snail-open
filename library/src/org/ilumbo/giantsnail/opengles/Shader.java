@@ -57,7 +57,7 @@ public class Shader {
 				messageBuilder.append("unknown");
 				break;
 			}
-			messageBuilder.append(").");
+			messageBuilder.append(')');
 			if (0 != informationLog.length()) {
 				messageBuilder.append('\n')
 						.append(informationLog);
@@ -69,8 +69,8 @@ public class Shader {
 		return name;
 	}
 	/**
-	 * Compiles and loads a shader object into OpenGL. The type argument must be GLES20.GL_VERTEX_SHADER or
-	 * GLES20.GL_FRAGMENT_SHADER.
+	 * Compiles and loads a shader object into OpenGL. The type argument must be {@link GLES20#GL_VERTEX_SHADER} or
+	 * {@link GLES20#GL_FRAGMENT_SHADER}.
 	 */
 	public static Shader compile(int type, String source) {
 		return new Shader(compileForName(type, source));
