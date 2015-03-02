@@ -2,30 +2,29 @@ package org.ilumbo.giantsnail.collections;
 
 import java.util.Arrays;
 
-import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.os.Build;
 
 /**
  * Builds an array of integers (not {@link Integer}s; use an {@link java.util.ArrayList} for that instead).
  */
-public class DynamicIntegerArrayBuilder extends IntegerArrayBuilder {
+public abstract class DynamicIntegerArrayBuilder extends IntegerArrayBuilder {
 	/**
 	 * The capacity that was passed to the constructor.
 	 */
-	private final int initialCapacity;
-	public DynamicIntegerArrayBuilder(int capacity) {
+	protected final int initialCapacity;
+	protected DynamicIntegerArrayBuilder(int capacity) {
 		super(capacity);
 		initialCapacity = capacity;
 	}
 	@Override
 	public void add(int value) {
-		// If the resulting array is not big enough to hold the additional integer, increase the size of the array.
+		// If the resulting array is not big enough to hold the additional value, increase the size of the array.
 		if (pointer == result.length) {
-			prepareForAdditionalIntegers();
+			prepareForAdditionalValues();
 		}
 		super.add(value);
 	}
-	@SuppressLint("NewApi")
 	@Override
 	public int[] build() {
 		// If the resulting array has been filled entirely, return it directly.
@@ -33,23 +32,47 @@ public class DynamicIntegerArrayBuilder extends IntegerArrayBuilder {
 			return result;
 		// If the resulting array has not been filled entirely, return an array with the same content and the correct length.
 		} else {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-				return Arrays.copyOf(result, pointer);
-			} else /* if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) */ {
-				final int[] truncatedResult = new int[pointer];
-				System.arraycopy(result, 0, truncatedResult, 0, pointer);
-				return truncatedResult;
-			}
+			return buildTruncated();
 		}
 	}
-	@SuppressLint("NewApi")
-	protected void prepareForAdditionalIntegers() {
+	protected abstract int[] buildTruncated();
+	public static final DynamicIntegerArrayBuilder createDynamicIntegerArrayBuilder(int capacity) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-			result = Arrays.copyOf(result, pointer + initialCapacity);
+			return new GingerbreadDynamicIntegerArrayBuilder(capacity);
 		} else /* if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) */ {
+			return new FroyoDynamicIntegerArrayBuilder(capacity);
+		}
+	}
+	protected abstract void prepareForAdditionalValues();
+	public static class FroyoDynamicIntegerArrayBuilder extends DynamicIntegerArrayBuilder {
+		public FroyoDynamicIntegerArrayBuilder(int capacity) {
+			super(capacity);
+		}
+		@Override
+		protected int[] buildTruncated() {
+			final int[] truncatedResult = new int[pointer];
+			System.arraycopy(result, 0, truncatedResult, 0, pointer);
+			return truncatedResult;
+		}
+		@Override
+		protected void prepareForAdditionalValues() {
 			final int[] newResult = new int[pointer + initialCapacity];
 			System.arraycopy(result, 0, newResult, 0, pointer);
 			result = newResult;
+		}
+	}
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
+	public static class GingerbreadDynamicIntegerArrayBuilder extends DynamicIntegerArrayBuilder {
+		public GingerbreadDynamicIntegerArrayBuilder(int capacity) {
+			super(capacity);
+		}
+		@Override
+		protected int[] buildTruncated() {
+			return Arrays.copyOf(result, pointer);
+		}
+		@Override
+		protected void prepareForAdditionalValues() {
+			result = Arrays.copyOf(result, pointer + initialCapacity);
 		}
 	}
 }

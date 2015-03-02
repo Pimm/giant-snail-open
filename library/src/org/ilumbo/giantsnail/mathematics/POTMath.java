@@ -34,6 +34,12 @@ public final class POTMath {
 	 */
 	private static final double LOG_2 = .69315;
 	/**
+	 * Returns whether the passed input is a power of two.
+	 */
+	public static final boolean determineIsPot(final int input) {
+		return 0 == (input & input - 1);
+	}
+	/**
 	 * Returns the lowest power of two that is equal to or greater than the passed input. Behaviour is undefined for
 	 * non-positive inputs. 1 is considered a power of two (2⁰).
 	 */
@@ -42,6 +48,7 @@ public final class POTMath {
 		if (0 == (input & input - 1)) {
 			return input;
 		}
+		// TODO Test 1 << 32 - Integer.numberOfLeadingZeros(input - 1).
 		return 1 << 32 - Integer.numberOfLeadingZeros(input);
 	}
 	/**

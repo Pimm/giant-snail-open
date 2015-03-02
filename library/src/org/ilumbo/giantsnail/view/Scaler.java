@@ -44,19 +44,19 @@ public final class Scaler {
 	 * Scales the passed bitmap by the passed scale factors, and then draws it to the passed canvas at the passed coordinates.
 	 * The passed bitmap is unaltered.
 	 */
-	public final void scaleAndDraw(Bitmap bitmap, float widthScaleFactor, float heightScaleFactor,
+	public final void scaleAndDraw(Bitmap bitmap, float scaleFactorWidth, float scaleFactorHeight,
 			float left, float top, Canvas canvas) {
-		if (1 != widthScaleFactor || 1 != heightScaleFactor) {
+		if (1 != scaleFactorWidth || 1 != scaleFactorHeight) {
 			// Update the matrix, for scaling.
-			scaleMatrixValues[0] = widthScaleFactor;
+			scaleMatrixValues[0] = scaleFactorWidth;
 			scaleMatrixValues[2] = left;
-			scaleMatrixValues[4] = heightScaleFactor;
+			scaleMatrixValues[4] = scaleFactorHeight;
 			scaleMatrixValues[5] = top;
 			scaleMatrix.setValues(scaleMatrixValues);
 			// Draw.
 			canvas.drawBitmap(bitmap, scaleMatrix, scalePaint);
 		// Don't apply any matrix stuff if the width and height scale factors are 1.
-		} else /* if (1 == widthScaleFactor && 1 == heightScaleFactor) */ {
+		} else /* if (1 == scaleFactorWidth && 1 == scaleFactorHeight) */ {
 			canvas.drawBitmap(bitmap, left, top, null);
 		}
 	}
@@ -71,18 +71,18 @@ public final class Scaler {
 	 * Scales the passed bitmap by the passed scale factors, and then draws it to the passed canvas. The passed bitmap is
 	 * unaltered.
 	 */
-	public final void scaleAndDraw(Bitmap bitmap, float widthScaleFactor, float heightScaleFactor, Canvas canvas) {
-		if (1 != widthScaleFactor || 1 != heightScaleFactor) {
+	public final void scaleAndDraw(Bitmap bitmap, float scaleFactorWidth, float scaleFactorHeight, Canvas canvas) {
+		if (1 != scaleFactorWidth || 1 != scaleFactorHeight) {
 			// Update the matrix, for scaling.
-			scaleMatrixValues[0] = widthScaleFactor;
-			scaleMatrixValues[4] = heightScaleFactor;
+			scaleMatrixValues[0] = scaleFactorWidth;
+			scaleMatrixValues[4] = scaleFactorHeight;
 			scaleMatrixValues[2] =
 					scaleMatrixValues[5] = 0;
 			scaleMatrix.setValues(scaleMatrixValues);
 			// Draw.
 			canvas.drawBitmap(bitmap, scaleMatrix, scalePaint);
 		// Don't apply any matrix stuff if the width and height scale factors are 1.
-		} else /* if (1 == widthScaleFactor && 1 == heightScaleFactor) */ {
+		} else /* if (1 == scaleFactorWidth && 1 == scaleFactorHeight) */ {
 			canvas.drawBitmap(bitmap, 0, 0, null);
 		}
 	}

@@ -46,7 +46,7 @@ public final class MurmurHash3 {
 	 */
 	public final static int calculate(byte[] data, int offset, int length, int seed) {
 		int h1 = seed;
-		// Round down to 4 byte block.
+		// Round down to a 4 byte block.
 		final int roundedEnd = offset + (length & 0xFFFFFFFC);
 		for (int index = offset; roundedEnd != index; index += 4) {
 			// Little endian load order. The and operator turns the bytes into an unsigned integer (0…0xFF, inclusive).
@@ -65,13 +65,13 @@ public final class MurmurHash3 {
 		int k1 = 0;
 		switch (length & 0x03) {
 		case 3:
-			k1 = (data[roundedEnd + 2] & 0xFF) << 16;
+			k1 = (data[roundedEnd | 2] & 0xFF) << 16;
 			// Fallthrough (no break).
 		case 2:
-			k1 |= (data[roundedEnd + 1] & 0xFF) << 8;
+			k1 |= (data[roundedEnd | 1] & 0xFF) << 8;
 			// Fallthrough (no break).
 		case 1:
-			k1 |= (data[roundedEnd] & 0xFF);
+			k1 |= (data[roundedEnd /* | 0 */] & 0xFF) /* << 0 */;
 			k1 *= c1;
 			// Inlined ROTL32(k1,15)
 			k1 = (k1 << 15) | (k1 >>> 17);
