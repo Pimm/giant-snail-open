@@ -1,5 +1,8 @@
 package org.ilumbo.giantsnail.opengles;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import android.opengl.GLES20;
 
 public class Buffer {
@@ -19,6 +22,10 @@ public class Buffer {
 	 * The name of the buffer object in OpenGL.
 	 */
 	public final int name;
+	/**
+	 * A re-usable native buffer, used in {@link #setData(float[], byte)}.
+	 */
+	protected ByteBuffer nativeBuffer;
 	public Buffer() {
 		final int[] names = new int[1];
 		GLES20.glGenBuffers(1, names, 0);
@@ -32,6 +39,13 @@ public class Buffer {
 	public final void bind() {
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, name);
 		OpenGLESUtils.checkErrors("glBindBuffer");
+	}
+	/**
+	 * Removes the buffer from OpenGL.
+	 */
+	public final void dispose() {
+		GLES20.glDeleteBuffers(1, new int[]{name}, 0);
+		OpenGLESUtils.checkErrors("glDeleteBuffers");
 	}
 	/**
 	 * Creates a new data store for this buffer, deleting an existing data store if any, and transfers the passed data to that
@@ -61,6 +75,31 @@ public class Buffer {
 		OpenGLESUtils.checkErrors("glBufferData");
 		// Unbind.
 		Buffer.unbind();
+	}
+	/**
+	 * Like {@link #setData(int, java.nio.Buffer, byte)}, but accepts an array of floats.
+	 */
+	public final void setData(float[] data, byte accessFrequency) {
+		// Grab or create a native buffer.
+		final ByteBuffer nativeBuffer;
+		if (null != this.nativeBuffer && this.nativeBuffer.capacity() >= data.length * (Float.SIZE >> 3)) {
+			nativeBuffer = this.nativeBuffer;
+		} else /* if (null == this.nativeBuffer || this.nativeBuffer.capacity() < data.length * (Float.SIZE >> 3)) */ {
+			nativeBuffer = ByteBuffer.allocateDirect(data.length * (Float.SIZE >> 3))
+					.order(ByteOrder.nativeOrder());
+		}
+		// Fill the native buffer with the data.
+		nativeBuffer.position(0);
+		nativeBuffer.asFloatBuffer()
+				.put(data).position(0);
+
+		// Set the data.
+		setData(data.length * (Float.SIZE >> 3), nativeBuffer, accessFrequency);
+		// If the access frequency suggests that this buffer (the OpenGL buffer) will be modified repeatedly, save the native
+		// buffer.
+		if (ACCESS_FREQUENCY_DYNAMIC == accessFrequency) {
+			this.nativeBuffer = nativeBuffer;
+		}
 	}
 	/**
 	 * Unbinds the currently bound buffer (regardless of which buffer that is) from {@link GLES20#GL_ARRAY_BUFFER}.

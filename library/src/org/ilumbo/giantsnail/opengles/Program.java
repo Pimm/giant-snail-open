@@ -10,17 +10,16 @@ public class Program {
 		}
 	}
 	/**
-	 * The name of the program object in OpenGL.
+	 * The name of the program in OpenGL.
 	 */
 	public final int name;
 	protected Program(int name) {
 		this.name = name;
 	}
 	/**
-	 * Removes the program object from OpenGL.
+	 * Removes the program from OpenGL.
 	 */
 	public final void dispose() {
-		// Remove the program object from OpenGL.
 		GLES20.glDeleteProgram(name);
 //		OpenGLESUtils.checkErrors("glDeleteProgram");
 	}
@@ -65,7 +64,7 @@ public class Program {
 		return -1 == result ? Integer.MIN_VALUE : result;
 	}
 	protected static final int linkForName(Shader firstShader, Shader secondShader) {
-		// Create an (empty) program object in OpenGL.
+		// Create an (empty) program in OpenGL.
 		final int name = GLES20.glCreateProgram();
 //		OpenGLESUtils.checkErrors("glCreateProgram");
 		// Attach the passed shader objects to the newly created program object.
@@ -73,7 +72,7 @@ public class Program {
 //		OpenGLESUtils.checkErrors("glAttachShader");
 		GLES20.glAttachShader(name, secondShader.name);
 //		OpenGLESUtils.checkErrors("glAttachShader");
-		// Link the program object.
+		// Link the program.
 		GLES20.glLinkProgram(name);
 //		OpenGLESUtils.checkErrors("glLinkProgram");
 		// Get the link status.
@@ -96,7 +95,6 @@ public class Program {
 						.append(informationLog)
 						.toString();
 			}
-			android.util.Log.e(Program.class.getSimpleName(), message);
 			throw new ProgramLinkException(message);
 		}
 		return name;
@@ -113,7 +111,7 @@ public class Program {
 		OpenGLESUtils.checkErrors("glUseProgram");
 	}
 	/**
-	 * Installs the program object as part of current OpenGL rendering state.
+	 * Installs the program as part of current OpenGL rendering state.
 	 */
 	public final Program use() {
 		GLES20.glUseProgram(name);

@@ -10,6 +10,14 @@ public class Shader {
 		}
 	}
 	/**
+	 * The type of a shader that is intended to run on the programmable vertex processor.
+	 */
+	public static final boolean TYPE_VERTEX = false;
+	/**
+	 * The type of a shader that is intended to run on the programmable fragment processor.
+	 */
+	public static final boolean TYPE_FRAGMENT = true;
+	/**
 	 * The name of the shader object in OpenGL.
 	 */
 	public final int name;
@@ -17,21 +25,20 @@ public class Shader {
 		this.name = name;
 	}
 	/**
-	 * Removes the shader object from OpenGL.
+	 * Removes the shader from OpenGL.
 	 */
 	public final void dispose() {
-		// Remove the shader object from OpenGL.
 		GLES20.glDeleteShader(name);
 //		OpenGLESUtils.checkErrors("glDeleteShader");
 	}
-	protected static final int compileForName(int type, String source) {
-		// Create an (empty) shader object in OpenGL.
-		final int name = GLES20.glCreateShader(type);
+	protected static final int compileForName(String source, boolean type) {
+		// Create an (empty) shader in OpenGL.
+		final int name = GLES20.glCreateShader(TYPE_VERTEX == type ? GLES20.GL_VERTEX_SHADER : GLES20.GL_FRAGMENT_SHADER);
 //		OpenGLESUtils.checkErrors("glCreateShader");
-		// Add the source to the newly created shader object.
+		// Add the source to the newly created shader.
 		GLES20.glShaderSource(name, source);
 //		OpenGLESUtils.checkErrors("glShaderSource");
-		// Compile the shader object.
+		// Compile the shader.
 		GLES20.glCompileShader(name);
 //		OpenGLESUtils.checkErrors("glCompileShader");
 		// Get the compile status.
@@ -40,39 +47,30 @@ public class Shader {
 		if (GLES20.GL_FALSE == compileStatus[0]) {
 			// Grab the information log.
 			final String informationLog = GLES20.glGetShaderInfoLog(name);
-			// Remove the shader object from OpenGL.
+			// Remove the shader from OpenGL.
 			GLES20.glDeleteShader(name);
 //			OpenGLESUtils.checkErrors("glDeleteShader");
 			// Log and throw an exception.
 			final StringBuilder messageBuilder = new StringBuilder(256)
 					.append("GL_COMPILE_STATUS is GL_FALSE (type is ");
-			switch (type) {
-			case GLES20.GL_VERTEX_SHADER:
-				messageBuilder.append("GL_VERTEX_SHADER");
-				break;
-			case GLES20.GL_FRAGMENT_SHADER:
-				messageBuilder.append("GL_FRAGMENT_SHADER");
-				break;
-			default:
-				messageBuilder.append("unknown");
-				break;
+			if (TYPE_VERTEX == type) {
+				messageBuilder.append("TYPE_VERTEX");
+			} else /* if (TYPE_FRAGMENT == type) */ {
+				messageBuilder.append("TYPE_FRAGMENT");
 			}
 			messageBuilder.append(')');
 			if (0 != informationLog.length()) {
 				messageBuilder.append('\n')
 						.append(informationLog);
 			}
-			final String message = messageBuilder.toString();
-			android.util.Log.e(Shader.class.getSimpleName(), message);
-			throw new ShaderCompileException(message);
+			throw new ShaderCompileException(messageBuilder.toString());
 		}
 		return name;
 	}
 	/**
-	 * Compiles and loads a shader object into OpenGL. The type argument must be {@link GLES20#GL_VERTEX_SHADER} or
-	 * {@link GLES20#GL_FRAGMENT_SHADER}.
+	 * Compiles and loads a shader into OpenGL.
 	 */
-	public static Shader compile(int type, String source) {
-		return new Shader(compileForName(type, source));
+	public static Shader compile(String source, boolean type) {
+		return new Shader(compileForName(source, type));
 	}
 }
