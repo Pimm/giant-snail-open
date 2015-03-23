@@ -7,17 +7,21 @@ import android.opengl.GLES20;
 
 public class Buffer {
 	/**
-	 * The data set via {@link #setData()} will be modified once and used at most a few times.
+	 * The data set via {@link #setData(int, java.nio.Buffer, byte)} will be modified once and used at most a few times.
 	 */
 	public static final byte ACCESS_FREQUENCY_STREAM = 0;
 	/**
-	 * The data set via {@link #setData()} will be modified once and used many times.
+	 * The data set via {@link #setData(int, java.nio.Buffer, byte)} will be modified once and used many times.
 	 */
 	public static final byte ACCESS_FREQUENCY_STATIC = 1;
 	/**
-	 * The data set via {@link #setData()} will be modified repeatedly and used many times.
+	 * The data set via {@link #setData(int, java.nio.Buffer, byte)} will be modified repeatedly and used many times.
 	 */
 	public static final byte ACCESS_FREQUENCY_DYNAMIC = 2;
+	/**
+	 * The number of bytes the data store for this buffer is.
+	 */
+	protected int capacity;
 	/**
 	 * The name of the buffer object in OpenGL.
 	 */
@@ -48,11 +52,18 @@ public class Buffer {
 		OpenGLESUtils.checkErrors("glDeleteBuffers");
 	}
 	/**
-	 * Creates a new data store for this buffer, deleting an existing data store if any, and transfers the passed data to that
-	 * data store. This method binds and unbinds in the process, so after this method is called there is no buffer bound to
-	 * {@link GLES20#GL_ARRAY_BUFFER}.
+	 * Injects the passed data into the existing data store of the previously bound buffer.
 	 */
-	public final void setData(int sizeInBytes, java.nio.Buffer data, byte accessFrequency) {
+	public static final void insertData(java.nio.Buffer data, int startInBytes, int endInBytes, int offsetInBytes) {
+		GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offsetInBytes, endInBytes - startInBytes, data.position(startInBytes));
+		OpenGLESUtils.checkErrors("glBufferSubData");
+	}
+	/**
+	 * Creates a new data store for this buffer, deleting an existing data store if any. The data store will be able to hold
+	 * the passed number of bytes. This method binds and unbinds in the process, so after this method is called there is no
+	 * buffer bound to {@link GLES20#GL_ARRAY_BUFFER}.
+	 */
+	public final void prepareForData(int sizeInBytes, byte accessFrequency) {
 		// Bind. This line unbinds any previously bound buffer, and this method does not restore said buffer.
 		bind();
 		// Determine the usage.
@@ -70,8 +81,41 @@ public class Buffer {
 		default:
 			throw new IllegalArgumentException("Unsupported access frequency was passed");
 		}
-		// Set the data.
-		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, sizeInBytes, data, usage);
+		// Overwrite the data store.
+		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, capacity = sizeInBytes, null, usage);
+		OpenGLESUtils.checkErrors("glBufferData");
+		// Obtain the size of the newly created data store.
+//		final int[] size = new int[1];
+//		GLES20.glGetBufferParameteriv(GLES20.GL_ARRAY_BUFFER, GLES20.GL_BUFFER_SIZE, size, 0);
+//		OpenGLESUtils.checkErrors("glGetBufferParameteriv");
+		// Unbind.
+		Buffer.unbind();
+	}
+	/**
+	 * Creates a new data store for this buffer, deleting an existing data store if any, and transfers the passed data to that
+	 * data store. This method binds and unbinds in the process, so after this method is called there is no buffer bound to
+	 * {@link GLES20#GL_ARRAY_BUFFER}.
+	 */
+	public final void setData(java.nio.Buffer data, int startInBytes, int endInBytes, byte accessFrequency) {
+		// Bind. This line unbinds any previously bound buffer, and this method does not restore said buffer.
+		bind();
+		// Determine the usage.
+		final int usage;
+		switch (accessFrequency) {
+		case ACCESS_FREQUENCY_STREAM:
+			usage = GLES20.GL_STREAM_DRAW;
+			break;
+		case ACCESS_FREQUENCY_STATIC:
+			usage = GLES20.GL_STATIC_DRAW;
+			break;
+		case ACCESS_FREQUENCY_DYNAMIC:
+			usage = GLES20.GL_DYNAMIC_DRAW;
+			break;
+		default:
+			throw new IllegalArgumentException("Unsupported access frequency was passed");
+		}
+		// Set the data (overwritig the data store).
+		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, capacity = (endInBytes - startInBytes), data.position(startInBytes), usage);
 		OpenGLESUtils.checkErrors("glBufferData");
 		// Unbind.
 		Buffer.unbind();
@@ -91,10 +135,9 @@ public class Buffer {
 		// Fill the native buffer with the data.
 		nativeBuffer.position(0);
 		nativeBuffer.asFloatBuffer()
-				.put(data).position(0);
-
+				.put(data);
 		// Set the data.
-		setData(data.length * (Float.SIZE >> 3), nativeBuffer, accessFrequency);
+		setData(nativeBuffer, 0, data.length * (Float.SIZE >> 3), accessFrequency);
 		// If the access frequency suggests that this buffer (the OpenGL buffer) will be modified repeatedly, save the native
 		// buffer.
 		if (ACCESS_FREQUENCY_DYNAMIC == accessFrequency) {
