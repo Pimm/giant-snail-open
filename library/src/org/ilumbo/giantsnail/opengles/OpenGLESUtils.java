@@ -61,4 +61,31 @@ public final class OpenGLESUtils {
 		// This line ensures the result is a power of two, equal to or less than the value returned above.
 		return POTMath.floor(result[0]);
 	}
+	/**
+	 * Converts an array of floats to a string, similar to "2.5,1.8,8.6". The input is expected to have a length of at least
+	 * one, and any values after the fourth one is ignored.
+	 */
+	public static final String representFloatArrayAsString(float[] input) {
+		final StringBuilder resultBuilder = new StringBuilder(32);
+		representFloatArrayAsString(input, resultBuilder);
+		return resultBuilder.toString();
+	}
+	/**
+	 * Like {@link #representFloatArrayAsString(float[])}, but faster as it doesn't have to create its own string builder.
+	 */
+	public static final void representFloatArrayAsString(float[] input, StringBuilder target) {
+		target.append(input[0]);
+		if (input.length > 1) {
+			target.append(',')
+					.append(input[1]);
+			if (input.length > 2) {
+				target.append(',')
+						.append(input[2]);
+				if (input.length > 3) {
+					target.append(',')
+							.append(input[3]);
+				}
+			}
+		}
+	}
 }
