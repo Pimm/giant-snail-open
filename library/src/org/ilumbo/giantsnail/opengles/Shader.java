@@ -31,7 +31,7 @@ public class Shader {
 		GLES20.glDeleteShader(name);
 //		OpenGLESUtils.checkErrors("glDeleteShader");
 	}
-	protected static final int compileForName(String source, boolean type) {
+	protected static int compileForName(String source, boolean type) {
 		// Create an (empty) shader in OpenGL.
 		final int name = GLES20.glCreateShader(TYPE_VERTEX == type ? GLES20.GL_VERTEX_SHADER : GLES20.GL_FRAGMENT_SHADER);
 //		OpenGLESUtils.checkErrors("glCreateShader");
