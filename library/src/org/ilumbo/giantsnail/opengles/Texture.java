@@ -145,10 +145,10 @@ public class Texture {
 	/**
 	 * Binds the texture to GL_TEXTURE_2D.
 	 */
-	public final void bind() {
-		// Bind the texture to GL_TEXTURE_2D.
+	public final Texture bind() {
 		GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, name);
 //		OpenGLESUtils.checkErrors("glBindTexture");
+		return this;
 	}
 	/**
 	 * Returns whether the format and the type in the passed texture parameters are compatible.
@@ -280,6 +280,13 @@ public class Texture {
 	 */
 	protected final boolean determineIsPot() {
 		return POTMath.determineIsPot(width) && POTMath.determineIsPot(height);
+	}
+	/**
+	 * Removes the texture from OpenGL.
+	 */
+	public final void dispose() {
+		GLES20.glDeleteTextures(1, new int[name], 0);
+//		OpenGLESUtils.checkErrors("dispose");
 	}
 	/**
 	 * Returns the OpenGL constant that matches the format in the passed texture parameters. Returns -1 if the passed texture

@@ -40,9 +40,10 @@ public class Buffer {
 	 * as a pointer to client-side memory will instead be interpreted as an offset within the buffer measured in basic machine
 	 * units.
 	 */
-	public final void bind() {
+	public final Buffer bind() {
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, name);
 //		OpenGLESUtils.checkErrors("glBindBuffer");
+		return this;
 	}
 	/**
 	 * Removes the buffer from OpenGL.
@@ -54,13 +55,13 @@ public class Buffer {
 	/**
 	 * Injects the passed data into the existing data store of the previously bound buffer.
 	 */
-	public static final void insertData(java.nio.Buffer data, int startInBytes, int endInBytes, int offsetInBytes) {
+	public final void insertData(java.nio.Buffer data, int startInBytes, int endInBytes, int offsetInBytes) {
 		GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offsetInBytes, endInBytes - startInBytes, data.position(startInBytes));
 //		OpenGLESUtils.checkErrors("glBufferSubData");
 	}
 	/**
 	 * Creates a new data store for the previously bound buffer, deleting an existing data store if any. If this buffer is not
-	 * currently bound, the behaviour is undefined and will possibly damage the state
+	 * currently bound, the behaviour is undefined and will possibly damage the state.
 	 */
 	public final void prepareForData(int sizeInBytes, byte accessFrequency) {
 		// Determine the usage.
