@@ -42,30 +42,27 @@ public class Buffer {
 	 */
 	public final void bind() {
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, name);
-		OpenGLESUtils.checkErrors("glBindBuffer");
+//		OpenGLESUtils.checkErrors("glBindBuffer");
 	}
 	/**
 	 * Removes the buffer from OpenGL.
 	 */
 	public final void dispose() {
 		GLES20.glDeleteBuffers(1, new int[]{name}, 0);
-		OpenGLESUtils.checkErrors("glDeleteBuffers");
+//		OpenGLESUtils.checkErrors("glDeleteBuffers");
 	}
 	/**
 	 * Injects the passed data into the existing data store of the previously bound buffer.
 	 */
 	public static final void insertData(java.nio.Buffer data, int startInBytes, int endInBytes, int offsetInBytes) {
 		GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, offsetInBytes, endInBytes - startInBytes, data.position(startInBytes));
-		OpenGLESUtils.checkErrors("glBufferSubData");
+//		OpenGLESUtils.checkErrors("glBufferSubData");
 	}
 	/**
-	 * Creates a new data store for this buffer, deleting an existing data store if any. The data store will be able to hold
-	 * the passed number of bytes. This method binds and unbinds in the process, so after this method is called there is no
-	 * buffer bound to {@link GLES20#GL_ARRAY_BUFFER}.
+	 * Creates a new data store for the previously bound buffer, deleting an existing data store if any. If this buffer is not
+	 * currently bound, the behaviour is undefined and will possibly damage the state
 	 */
 	public final void prepareForData(int sizeInBytes, byte accessFrequency) {
-		// Bind. This line unbinds any previously bound buffer, and this method does not restore said buffer.
-		bind();
 		// Determine the usage.
 		final int usage;
 		switch (accessFrequency) {
@@ -83,22 +80,18 @@ public class Buffer {
 		}
 		// Overwrite the data store.
 		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, capacity = sizeInBytes, null, usage);
-		OpenGLESUtils.checkErrors("glBufferData");
+//		OpenGLESUtils.checkErrors("glBufferData");
 		// Obtain the size of the newly created data store.
 //		final int[] size = new int[1];
 //		GLES20.glGetBufferParameteriv(GLES20.GL_ARRAY_BUFFER, GLES20.GL_BUFFER_SIZE, size, 0);
 //		OpenGLESUtils.checkErrors("glGetBufferParameteriv");
-		// Unbind.
-		Buffer.unbind();
 	}
 	/**
-	 * Creates a new data store for this buffer, deleting an existing data store if any, and transfers the passed data to that
-	 * data store. This method binds and unbinds in the process, so after this method is called there is no buffer bound to
-	 * {@link GLES20#GL_ARRAY_BUFFER}.
+	 * Creates a new data store for the previously bound buffer, deleting an existing data store if any, and transfers the
+	 * passed data to that data store. If this buffer is not currently bound, the behaviour is undefined and will possibly
+	 * damage the state.
 	 */
 	public final void setData(java.nio.Buffer data, int startInBytes, int endInBytes, byte accessFrequency) {
-		// Bind. This line unbinds any previously bound buffer, and this method does not restore said buffer.
-		bind();
 		// Determine the usage.
 		final int usage;
 		switch (accessFrequency) {
@@ -116,9 +109,7 @@ public class Buffer {
 		}
 		// Set the data (overwritig the data store).
 		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, capacity = (endInBytes - startInBytes), data.position(startInBytes), usage);
-		OpenGLESUtils.checkErrors("glBufferData");
-		// Unbind.
-		Buffer.unbind();
+//		OpenGLESUtils.checkErrors("glBufferData");
 	}
 	/**
 	 * Like {@link #setData(int, java.nio.Buffer, byte)}, but accepts an array of floats.
@@ -149,6 +140,6 @@ public class Buffer {
 	 */
 	public static final void unbind() {
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-		OpenGLESUtils.checkErrors("glBindBuffer");
+//		OpenGLESUtils.checkErrors("glBindBuffer");
 	}
 }
