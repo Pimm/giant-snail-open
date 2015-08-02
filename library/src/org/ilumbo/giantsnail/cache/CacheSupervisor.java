@@ -13,7 +13,7 @@ import android.os.Build;
  */
 public class CacheSupervisor {
 	/**
-	 * You should create the element and write it to the cache. Call {@link #finish()} after writing it.
+	 * You must create the element and write it to the cache. Call {@link #finish()} after writing it.
 	 */
 	public static final int OBTAIN_OPERATION_CREATE_AND_WRITE = 0;
 	/**
@@ -21,10 +21,11 @@ public class CacheSupervisor {
 	 */
 	public static final int OBTAIN_OPERATION_READ = 2;
 	/**
-	 * You should wait while the element is being created and written to the cache. Re-call
-	 * {@link #determineObtainOperation(int)}, which will return {@link #OBTAIN_OPERATION_READ} at some point.
+	 * The element is being created and written to cache. You can wait and re-call {@link #determineObtainOperation(int)},
+	 * which will return {@link #OBTAIN_OPERATION_READ} at some point. You can also simply create the element and bypass the
+	 * cache.
 	 */
-	public static final int OBTAIN_OPERATION_WAIT = 1;
+	public static final int OBTAIN_OPERATION_WAIT_OR_CREATE = 1;
 	/**
 	 * The number of elements that exist in the cache, or are in the process of being added to the cache.
 	 */
@@ -75,22 +76,16 @@ public class CacheSupervisor {
 	}
 	/**
 	 * Determines and returns how an element with the passed identifier must be obtained. Once you call this method, you must
-	 * in fact perform the obtain operation returned.
+	 * obey whatever is returned. If this is too much of a commitment, call {@link #peekObtainOperation(int)}.
 	 */
 	public int determineObtainOperation(int identifier) {
 		int index = getIndexForIdentifier(identifier);
 		// No information could be available at all, in which case the element should be created and written.
 		if (index < 0) {
 			// Set the status, so calling this method again with the same identifier will return OBTAIN_OPERATION_WAIT. Start
-			// by increasing the lengths of the arrays if needed to hold the new status (and identifier).
+			// by increasing the capacity to hold the new status (and identifier).
 			if (elementCount == identifiers.length) {
-				final int newLength = elementCount << 1;
-				final int[] newIdentifiers = new int[newLength];
-				final boolean[] newStatusses = new boolean[newLength];
-				System.arraycopy(identifiers, 0, newIdentifiers, 0, elementCount);
-				System.arraycopy(statusses, 0, newStatusses, 0, elementCount);
-				identifiers = newIdentifiers;
-				statusses = newStatusses;
+				increaseCapacity(elementCount << 1);
 			}
 			// Now move the identifiers and statusses, to make room for the new status (and identifier).
 			index = ~index;
@@ -109,14 +104,15 @@ public class CacheSupervisor {
 			return OBTAIN_OPERATION_READ;
 		// The element could be in the process of being added, in which case it should be waited for.
 		} else /* if (false == statusses[index]) */ {
-			return OBTAIN_OPERATION_WAIT;
+			return OBTAIN_OPERATION_WAIT_OR_CREATE;
 		}
 	}
 	/**
-	 * This method must be called after an element is created and written to the cache.
+	 * Informs the supervisor that the element with the passed identifier is now available in the cache. This method must be
+	 * called after an element is created and written to the cache.
 	 */
 	public void finish(int identifier) {
-		int index = getIndexForIdentifier(identifier);
+		final int index = getIndexForIdentifier(identifier);
 		// Check sanity.
 		if (index < 0) {
 			throw new IllegalStateException("No element with the passed identifier is known to this cache supervisor");
@@ -136,12 +132,29 @@ public class CacheSupervisor {
 		}
 	}
 	/**
+	 * Increases the capacity of the {@link #identifiers} and {@link #statusses} arrays.
+	 */
+	@TargetApi(Build.VERSION_CODES.GINGERBREAD)
+	protected void increaseCapacity(int newCapacity) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+			identifiers = Arrays.copyOf(identifiers, newCapacity);
+			statusses = Arrays.copyOf(statusses, newCapacity);
+		} else /* if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) */ {
+			final int[] newIdentifiers = new int[newCapacity];
+			System.arraycopy(identifiers, 0, newIdentifiers, 0, elementCount);
+			identifiers = newIdentifiers;
+			final boolean[] newStatusses = new boolean[newCapacity];
+			System.arraycopy(statusses, 0, newStatusses, 0, elementCount);
+			statusses = newStatusses;
+		}
+	}
+	/**
 	 * Determines and returns how an element with the passed identifier should be obtained if it was to be obtained. If this
 	 * method returns {@link #OBTAIN_OPERATION_READ}, {@link #determineObtainOperation(int)} will also return
 	 * {@link #OBTAIN_OPERATION_READ} for that identifier.
 	 */
 	public int peekObtainOperation(int identifier) {
-		int index = getIndexForIdentifier(identifier);
+		final int index = getIndexForIdentifier(identifier);
 		// No information could be available at all, in which case the element should be created and written.
 		if (index < 0) {
 			return OBTAIN_OPERATION_CREATE_AND_WRITE;
@@ -150,7 +163,28 @@ public class CacheSupervisor {
 			return OBTAIN_OPERATION_READ;
 		// The element could be in the process of being added, in which case it should be waited for.
 		} else /* if (false == statusses[index]) */ {
-			return OBTAIN_OPERATION_WAIT;
+			return OBTAIN_OPERATION_WAIT_OR_CREATE;
+		}
+	}
+	/**
+	 * Informs the supervisor that the element with the passed identifier is broken, meaning
+	 * {@link #determineObtainOperation(int)} or {@link #peekObtainOperation(int)} returned {@link #OBTAIN_OPERATION_READ} but
+	 * the element was not available in the cache. This method returns how the element should be obtained. Once you call this
+	 * method, you must obey whatever is returned
+	 */
+	public int refreshAndDetermineObtainOperation(int identifier) {
+		final int index = getIndexForIdentifier(identifier);
+		// Check sanity.
+		if (index < 0) {
+			throw new IllegalStateException("No element with the passed identifier is known to this cache supervisor");
+		// Check the current status. It is possible that another thread also noticed that the element is broken, and already
+		// called this method.
+		} else if (false == statusses[index]) {
+			return OBTAIN_OPERATION_WAIT_OR_CREATE;
+		// If this supervisor actually considered this element to be available in cache, the status is lowered and the element
+		// is recreated and rewritten.
+		} else /* if (statusses[index]) */ {
+			return OBTAIN_OPERATION_CREATE_AND_WRITE;
 		}
 	}
 }
